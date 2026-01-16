@@ -25,6 +25,8 @@ export interface ApiSchool {
   level: string;
   type: string;
   distance: number;
+  link?: string;
+  grades?: string;
 }
 
 export interface ApiAddress {
@@ -65,6 +67,8 @@ export interface School {
   distance: string;
   rating?: number;
   address: string;
+  imageUrl?: string; // Optional for future use
+  link?: string; // GreatSchools URL
 }
 
 export interface SchoolsListProps {

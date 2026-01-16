@@ -53,6 +53,7 @@ function transformApiData(
       distance: school.distance ? `${school.distance} miles` : "N/A",
       rating: school.rating || undefined,
       address: schoolAddress,
+      link: school.link,
     };
   });
 

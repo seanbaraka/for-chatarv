@@ -1,5 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
+import { Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import type { SchoolsListProps } from "@/lib/types";
 
 export function SchoolsList({ schoolDistrict, schools }: SchoolsListProps) {
@@ -18,51 +21,91 @@ export function SchoolsList({ schoolDistrict, schools }: SchoolsListProps) {
     }
   };
 
+  const renderStars = (rating: number) => {
+    // Convert 0-10 rating to 0-5 stars
+    const starRating = rating / 2;
+    const fullStars = Math.floor(starRating);
+    const hasHalfStar = starRating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+    return (
+      <div className="flex items-center gap-0.5">
+        {Array.from({ length: fullStars }).map((_, i) => (
+          <Star key={i} className="size-3 fill-yellow-400 text-yellow-400" />
+        ))}
+        {hasHalfStar && (
+          <Star className="size-3 fill-yellow-400/50 text-yellow-400" />
+        )}
+        {Array.from({ length: emptyStars }).map((_, i) => (
+          <Star
+            key={i + fullStars + (hasHalfStar ? 1 : 0)}
+            className="size-3 text-yellow-400/30"
+          />
+        ))}
+      </div>
+    );
+  };
+
+  if (schools.length === 0) {
+    return null;
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Schools</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          School District: {schoolDistrict}
-        </p>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Schools in the {schoolDistrict} area
+        </h2>
+      </div>
+      <ScrollArea className="w-full whitespace-nowrap">
+        <div className="flex gap-4 pb-4">
           {schools.map((school, index) => (
             <div
               key={index}
-              className="flex flex-col gap-2 border-b pb-4 last:border-b-0 last:pb-0"
+              className="rounded-lg border text-card-foreground overflow-hidden"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-base">{school.name}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {school.address}
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <Badge className={getTypeColor(school.type)}>
+              {/* School Info */}
+              <div className="flex flex-col gap-3 p-4 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-semibold text-sm leading-tight line-clamp-2">
+                    {school.name}
+                  </h3>
+                  <Badge
+                    className={getTypeColor(school.type)}
+                    variant="outline"
+                  >
                     {school.type}
                   </Badge>
-                  {school.rating && (
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm font-medium">
-                        {school.rating}/10
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        rating
-                      </span>
-                    </div>
-                  )}
+                </div>
+
+                {/* Star Rating */}
+                {school.rating ? (
+                  <div className="flex items-center gap-2">
+                    {renderStars(school.rating)}
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {school.rating}/10
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">
+                    Rating not available
+                  </span>
+                )}
+
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">
+                    {school.distance} from this address
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    District: {schoolDistrict}
+                  </p>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Distance: {school.distance}
-              </p>
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+    </div>
   );
 }
