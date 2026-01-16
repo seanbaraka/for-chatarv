@@ -243,16 +243,6 @@ export default function Home() {
       {/* Results Section */}
       {data && (
         <main className="container mx-auto max-w-4xl px-4 pb-16 sm:px-6 lg:px-8">
-          {isExampleData && (
-            <div className="mb-6 flex items-center justify-center">
-              <Badge
-                variant="outline"
-                className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
-              >
-                Example data for {data.address}
-              </Badge>
-            </div>
-          )}
           <div className="space-y-6">
             <ComparableHomes
               homes={data.comparableHomes}
