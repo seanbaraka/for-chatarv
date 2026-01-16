@@ -1,13 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { InputGroupInput } from "@/components/ui/input-group";
-import { googleAutoComplete } from "@/lib/api/autocomplete";
-import type {
-  Prediction,
-  AutocompleteResponse,
-  AddressAutocompleteProps,
-} from "@/lib/types";
+import { useAutocompleteQuery } from "@/hooks/use-autocomplete-query";
+import type { Prediction, AddressAutocompleteProps } from "@/lib/types";
 
 export function AddressAutocomplete({
   value,
@@ -18,46 +14,38 @@ export function AddressAutocomplete({
   className,
   onLoadingChange,
 }: AddressAutocompleteProps & { className?: string }) {
-  const [suggestions, setSuggestions] = useState<Prediction[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isManuallyClosed, setIsManuallyClosed] = useState(false);
+  const [debouncedInput, setDebouncedInput] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Use React Query hook for autocomplete
+  const { data: autocompleteResponse, isLoading } = useAutocompleteQuery(
+    debouncedInput,
+    debouncedInput.trim().length >= 3
+  );
+
+  // Extract suggestions from the response
+  const suggestions = useMemo(() => {
+    if (
+      autocompleteResponse?.status === "OK" &&
+      autocompleteResponse?.predictions
+    ) {
+      return autocompleteResponse.predictions;
+    }
+    return [];
+  }, [autocompleteResponse]);
+
+  // Derive isOpen from suggestions and manual close state
+  const isOpen = useMemo(() => {
+    if (isManuallyClosed) return false;
+    return suggestions.length > 0 && debouncedInput.trim().length >= 3;
+  }, [suggestions.length, debouncedInput, isManuallyClosed]);
 
   // Notify parent of loading state changes
   useEffect(() => {
     onLoadingChange?.(isLoading);
   }, [isLoading, onLoadingChange]);
-
-  // Debounced autocomplete function
-  const fetchSuggestions = useCallback(async (input: string) => {
-    if (!input.trim() || input.length < 3) {
-      setSuggestions([]);
-      setIsOpen(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = (await googleAutoComplete(
-        input
-      )) as AutocompleteResponse;
-
-      if (response.status === "OK" && response.predictions) {
-        setSuggestions(response.predictions);
-        setIsOpen(true);
-      } else {
-        setSuggestions([]);
-        setIsOpen(false);
-      }
-    } catch (error) {
-      console.error("Autocomplete error:", error);
-      setSuggestions([]);
-      setIsOpen(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
   // Handle input change with debouncing
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,15 +59,15 @@ export function AddressAutocomplete({
 
     // Set new timer for debouncing
     debounceTimerRef.current = setTimeout(() => {
-      fetchSuggestions(newValue);
+      setDebouncedInput(newValue);
     }, 300);
   };
 
   // Handle suggestion selection
   const handleSelect = (suggestion: Prediction) => {
     onChange(suggestion.description);
-    setSuggestions([]);
-    setIsOpen(false);
+    setDebouncedInput(""); // Clear debounced input to close suggestions
+    setIsManuallyClosed(true);
     // Trigger search when suggestion is selected
     if (onSubmit) {
       onSubmit();
@@ -99,7 +87,7 @@ export function AddressAutocomplete({
       e.preventDefault();
       handleSelect(suggestions[0]);
     } else if (e.key === "Escape") {
-      setIsOpen(false);
+      setIsManuallyClosed(true);
     }
   };
 
@@ -112,7 +100,7 @@ export function AddressAutocomplete({
         !containerRef.current.contains(target) &&
         !(target as HTMLElement).closest('[data-slot="input-group"]')
       ) {
-        setIsOpen(false);
+        setIsManuallyClosed(true);
       }
     };
 
@@ -143,11 +131,15 @@ export function AddressAutocomplete({
         placeholder={placeholder}
         disabled={disabled}
         name="address"
-        className="md:text-lg"
+        className={`md:text-lg ${className || ""}`}
         onFocus={() => {
-          if (suggestions.length > 0) {
-            setIsOpen(true);
+          if (suggestions.length > 0 && debouncedInput.trim().length >= 3) {
+            setIsManuallyClosed(false);
           }
+        }}
+        onInput={() => {
+          // Reset manual close when user types
+          setIsManuallyClosed(false);
         }}
       />
       {isOpen && (suggestions.length > 0 || isLoading) && (
