@@ -5,7 +5,6 @@ import { Search, Loader2 } from "lucide-react";
 import { InputGroup, InputGroupButton } from "@/components/ui/input-group";
 import { SchoolsList } from "@/components/schools-list";
 import { ComparableHomes } from "@/components/comparable-homes";
-import { NeighborhoodPricing } from "@/components/neighborhood-pricing";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { useNeighborhoodQuery } from "@/hooks/use-neighborhood-query";
 import type {
@@ -83,6 +82,12 @@ function transformApiData(
         .filter(Boolean)
         .join(", ");
 
+      // Extract image URL from miniCardPhotos
+      const imageUrl =
+        home.miniCardPhotos && home.miniCardPhotos.length > 0
+          ? home.miniCardPhotos[0].url
+          : undefined;
+
       return {
         address: fullAddress || "Address not available",
         price,
@@ -90,6 +95,7 @@ function transformApiData(
         beds: home.bedrooms || 0,
         baths: home.bathrooms || 0,
         pricePerSqft,
+        imageUrl,
       };
     })
     .slice(0, 10); // Limit to 10 comparable homes
@@ -176,7 +182,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
       {/* Hero Section */}
-      <section className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
+      <section className="flex min-h-[60vh] flex-col items-center justify-center px-4 pt-16 sm:px-6 lg:px-8">
         <div className="w-full max-w-3xl space-y-8 text-center">
           <div className="space-y-4">
             <h1 className="text-4xl font-bold tracking-tight text-black dark:text-zinc-50 sm:text-5xl lg:text-6xl">
@@ -228,14 +234,14 @@ export default function Home() {
       {data && (
         <main className="container mx-auto max-w-4xl px-4 pb-16 sm:px-6 lg:px-8">
           <div className="space-y-6">
+            <ComparableHomes
+              homes={data.comparableHomes}
+              averagePricePerSqft={data.pricing.averagePricePerSqft}
+              classification={data.pricing.classification}
+            />
             <SchoolsList
               schoolDistrict={data.schoolDistrict}
               schools={data.schools}
-            />
-            <ComparableHomes homes={data.comparableHomes} />
-            <NeighborhoodPricing
-              averagePricePerSqft={data.pricing.averagePricePerSqft}
-              classification={data.pricing.classification}
             />
           </div>
         </main>

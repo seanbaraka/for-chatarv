@@ -44,6 +44,7 @@ export interface ApiNearbyHome {
   livingAreaValue?: number;
   homeType: string;
   address: ApiAddress;
+  miniCardPhotos?: Array<{ url: string }>;
 }
 
 export interface ApiResoFacts {
@@ -84,6 +85,7 @@ export interface ComparableHome {
   beds: number;
   baths: number;
   pricePerSqft: number;
+  imageUrl?: string;
 }
 
 export interface ComparableHomesProps {
