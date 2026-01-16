@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search, Loader2 } from "lucide-react";
+import { InputGroup, InputGroupButton } from "@/components/ui/input-group";
 import { SchoolsList } from "@/components/schools-list";
 import { ComparableHomes } from "@/components/comparable-homes";
 import { NeighborhoodPricing } from "@/components/neighborhood-pricing";
@@ -142,6 +141,7 @@ function transformApiData(
 export default function Home() {
   const [address, setAddress] = useState("");
   const [submittedAddress, setSubmittedAddress] = useState("");
+  const [isAutocompleteLoading, setIsAutocompleteLoading] = useState(false);
 
   // Use React Query - this will cache results for 5 minutes
   const {
@@ -155,8 +155,8 @@ export default function Home() {
     ? transformApiData(apiResponse, submittedAddress)
     : null;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!address.trim()) {
       return;
     }
@@ -174,52 +174,58 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      <main className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-black dark:text-zinc-50 mb-2">
-            Neighborhood Insights
-          </h1>
-          <p className="text-muted-foreground">
-            Enter a home address to discover schools, comparable homes, and
-            neighborhood pricing
-          </p>
-        </div>
+      {/* Hero Section */}
+      <section className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
+        <div className="w-full max-w-3xl space-y-8 text-center">
+          <div className="space-y-4">
+            <h1 className="text-4xl font-bold tracking-tight text-black dark:text-zinc-50 sm:text-5xl lg:text-6xl">
+              Know Your Neighborhood Before You Buy
+            </h1>
+            <p className="mx-auto max-w-2xl text-lg text-muted-foreground sm:text-xl">
+              Get to see nearby schools, nearby home prices, and see what
+              you&apos;re really paying for. Perfect for buyers, agents, and
+              anyone who wants the full picture.
+            </p>
+          </div>
 
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Enter Address</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="address">Home Address</Label>
+          <form onSubmit={handleSubmit} className="relative w-full">
+            <div className="relative">
+              <InputGroup className="h-18 px-4 w-full rounded-full">
                 <AddressAutocomplete
                   value={address}
                   onChange={setAddress}
-                  onSelect={(selectedAddress) => {
-                    setAddress(selectedAddress);
-                  }}
-                  placeholder="16105 SE 113th Place, Renton, WA 98059"
+                  onSubmit={handleSubmit}
+                  onLoadingChange={setIsAutocompleteLoading}
+                  placeholder="Enter a home address to give it a try..."
                   disabled={isLoading}
+                  className="h-full"
                 />
-              </div>
-              <Button
-                type="submit"
-                disabled={isLoading || !address.trim()}
-                className="w-full sm:w-auto"
-              >
-                {isLoading ? "Loading..." : "Get Neighborhood Insights"}
-              </Button>
-            </form>
+                <InputGroupButton
+                  type="submit"
+                  disabled={isLoading || !address.trim()}
+                  size="icon-sm"
+                  className="mr-2 size-12 shrink-0"
+                >
+                  {isLoading || isAutocompleteLoading ? (
+                    <Loader2 className="size-6 animate-spin" />
+                  ) : (
+                    <Search className="size-6" />
+                  )}
+                </InputGroupButton>
+              </InputGroup>
+            </div>
             {error && (
-              <div className="mt-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+              <div className="mt-4 rounded-md bg-destructive/10 p-3 text-destructive text-sm">
                 {error}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </form>
+        </div>
+      </section>
 
-        {data && (
+      {/* Results Section */}
+      {data && (
+        <main className="container mx-auto max-w-4xl px-4 pb-16 sm:px-6 lg:px-8">
           <div className="space-y-6">
             <SchoolsList
               schoolDistrict={data.schoolDistrict}
@@ -231,8 +237,8 @@ export default function Home() {
               classification={data.pricing.classification}
             />
           </div>
-        )}
-      </main>
+        </main>
+      )}
     </div>
   );
 }

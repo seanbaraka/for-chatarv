@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Input } from "@/components/ui/input";
+import { InputGroupInput } from "@/components/ui/input-group";
 import { googleAutoComplete } from "@/lib/api/autocomplete";
 import type {
   Prediction,
@@ -12,15 +12,22 @@ import type {
 export function AddressAutocomplete({
   value,
   onChange,
-  onSelect,
+  onSubmit,
   placeholder,
   disabled,
-}: AddressAutocompleteProps) {
+  className,
+  onLoadingChange,
+}: AddressAutocompleteProps & { className?: string }) {
   const [suggestions, setSuggestions] = useState<Prediction[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Notify parent of loading state changes
+  useEffect(() => {
+    onLoadingChange?.(isLoading);
+  }, [isLoading, onLoadingChange]);
 
   // Debounced autocomplete function
   const fetchSuggestions = useCallback(async (input: string) => {
@@ -70,9 +77,13 @@ export function AddressAutocomplete({
 
   // Handle suggestion selection
   const handleSelect = (suggestion: Prediction) => {
-    onSelect(suggestion.description);
+    onChange(suggestion.description);
     setSuggestions([]);
     setIsOpen(false);
+    // Trigger search when suggestion is selected
+    if (onSubmit) {
+      onSubmit();
+    }
   };
 
   // Handle keyboard navigation
@@ -95,19 +106,23 @@ export function AddressAutocomplete({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
       if (
         containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
+        !containerRef.current.contains(target) &&
+        !(target as HTMLElement).closest('[data-slot="input-group"]')
       ) {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isOpen]);
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -119,14 +134,16 @@ export function AddressAutocomplete({
   }, []);
 
   return (
-    <div ref={containerRef} className="relative w-full">
-      <Input
+    <>
+      <InputGroupInput
         type="text"
         value={value}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
+        name="address"
+        className="md:text-lg"
         onFocus={() => {
           if (suggestions.length > 0) {
             setIsOpen(true);
@@ -134,7 +151,10 @@ export function AddressAutocomplete({
         }}
       />
       {isOpen && (suggestions.length > 0 || isLoading) && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-900 border rounded-md shadow-lg max-h-60 overflow-auto">
+        <div
+          ref={containerRef}
+          className="absolute top-full z-50 left-0 right-0 mt-2 bg-white dark:bg-zinc-900 border shadow-lg max-h-60 overflow-auto"
+        >
           {isLoading ? (
             <div className="px-4 py-2 text-sm text-muted-foreground">
               Loading...
@@ -145,7 +165,7 @@ export function AddressAutocomplete({
                 key={suggestion.place_id}
                 type="button"
                 onClick={() => handleSelect(suggestion)}
-                className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer focus:bg-accent focus:text-accent-foreground outline-none"
+                className="w-full text-left px-6 py-3 text-base hover:bg-accent hover:text-accent-foreground cursor-pointer focus:bg-accent focus:text-accent-foreground outline-none"
               >
                 {suggestion.description}
               </button>
@@ -153,6 +173,6 @@ export function AddressAutocomplete({
           )}
         </div>
       )}
-    </div>
+    </>
   );
 }

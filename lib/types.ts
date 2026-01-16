@@ -12,9 +12,10 @@ export interface AutocompleteResponse {
 export interface AddressAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
-  onSelect: (value: string) => void;
+  onSubmit?: () => void;
   placeholder?: string;
   disabled?: boolean;
+  onLoadingChange?: (isLoading: boolean) => void;
 }
 
 // API Response types
