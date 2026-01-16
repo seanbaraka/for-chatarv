@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReactQueryProvider } from "@/lib/react-query-provider";
+import { NavHeader } from "@/components/nav-header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Neighborhood Insights",
+  title: "Know Your Neighborhood Before You Buy | Neighborhood Insights",
   description:
-    "Discover schools, comparable homes, and neighborhood pricing for any address",
+    "Get comprehensive neighborhood insights including nearby schools with ratings, comparable home prices, and market analysis. Perfect for home buyers, real estate agents, and anyone researching neighborhoods.",
 };
 
 export default function RootLayout({
@@ -29,7 +30,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ReactQueryProvider>{children}</ReactQueryProvider>
+        <ReactQueryProvider>
+          <NavHeader />
+          {children}
+        </ReactQueryProvider>
       </body>
     </html>
   );
