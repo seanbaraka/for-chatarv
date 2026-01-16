@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { Home, BedDouble, Bath } from "lucide-react";
+import { FlexibleImage } from "@/components/flexible-image";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { ComparableHomesProps, NeighborhoodPricingProps } from "@/lib/types";
@@ -63,7 +63,7 @@ export function ComparableHomes({
                 {/* Home Image */}
                 <div className="relative w-24 bg-muted flex items-center justify-center">
                   {home.imageUrl ? (
-                    <Image
+                    <FlexibleImage
                       src={home.imageUrl}
                       alt={home.address}
                       fill
