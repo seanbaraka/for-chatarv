@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Search, Loader2 } from "lucide-react";
 import { InputGroup, InputGroupButton } from "@/components/ui/input-group";
+import { Badge } from "@/components/ui/badge";
 import { SchoolsList } from "@/components/schools-list";
 import { ComparableHomes } from "@/components/comparable-homes";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
@@ -14,6 +15,9 @@ import type {
   NeighborhoodData,
   PricingClassification,
 } from "@/lib/types";
+
+// Example address to show on initial load
+const EXAMPLE_ADDRESS = "16105 Southeast 113th Place, Renton, WA 98059, USA";
 
 // Transform API response to our expected format
 function transformApiData(
@@ -147,15 +151,19 @@ function transformApiData(
 
 export default function Home() {
   const [address, setAddress] = useState("");
-  const [submittedAddress, setSubmittedAddress] = useState("");
+  const [submittedAddress, setSubmittedAddress] = useState(EXAMPLE_ADDRESS);
   const [isAutocompleteLoading, setIsAutocompleteLoading] = useState(false);
+  const [isExampleData, setIsExampleData] = useState(true);
 
   // Use React Query - this will cache results for 5 minutes
   const {
     data: apiResponse,
     isLoading,
     error: queryError,
-  } = useNeighborhoodQuery(submittedAddress, !!submittedAddress);
+  } = useNeighborhoodQuery(
+    submittedAddress,
+    submittedAddress.trim().length > 0
+  );
 
   // Transform the data when available
   const data = apiResponse
@@ -169,6 +177,8 @@ export default function Home() {
     }
     // Set submitted address to trigger the query
     setSubmittedAddress(address.trim());
+    // Mark that this is no longer example data
+    setIsExampleData(false);
   };
 
   // Get error message
@@ -233,6 +243,16 @@ export default function Home() {
       {/* Results Section */}
       {data && (
         <main className="container mx-auto max-w-4xl px-4 pb-16 sm:px-6 lg:px-8">
+          {isExampleData && (
+            <div className="mb-6 flex items-center justify-center">
+              <Badge
+                variant="outline"
+                className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
+              >
+                Example data for {data.address}
+              </Badge>
+            </div>
+          )}
           <div className="space-y-6">
             <ComparableHomes
               homes={data.comparableHomes}
